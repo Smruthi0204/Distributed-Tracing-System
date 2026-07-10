@@ -1,0 +1,46 @@
+services:
+  postgres-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: trace_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  trace-collector:
+    build: ./trace-collector
+    depends_on:
+      - postgres-db
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/trace_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      GROQ_API_KEY: ${GROQ_API_KEY}
+
+  payment-service:
+    build: ./payment-service
+    depends_on:
+      - trace-collector
+    restart: on-failure
+
+  order-service:
+    build: ./order-service
+    depends_on:
+      - trace-collector
+    restart: on-failure
+
+  api-gateway:
+    build: ./api-gateway
+    depends_on:
+      - trace-collector
+    restart: on-failure
