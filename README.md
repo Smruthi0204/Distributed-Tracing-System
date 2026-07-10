@@ -35,7 +35,7 @@ the time of manually reading through spans to find the root cause.
 
 ## System Architecture
 
-![Architecture Diagram](./Architecture-Diagram.jpg).
+![Architecture Diagram](./Architecture-diagram.jpg).
 
 ---
 
