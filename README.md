@@ -23,8 +23,6 @@ report identifying the likely root cause, reducing the need to manually read thr
 ---
 
 ## Features
-
-## Features
 - Collect and store span data from distributed microservices
 - Query spans by trace, filter failures, and rank the slowest operations across services
 - Reconstruct the full call hierarchy of any trace as a parent-child tree
@@ -44,15 +42,19 @@ report identifying the likely root cause, reducing the need to manually read thr
 
 1. A microservice handles a request and sends a span to the Trace Collector via POST /api/spans. All spans belonging 
    to the same request share a common trace ID.
+   
 2. The Trace Collector receives the span and saves it to PostgreSQL.
+   
 3. When an engineer queries a trace by ID, the collector first checks Redis. If the 
    trace is cached, it returns immediately without hitting the database. If not, it 
    fetches from PostgreSQL and caches the result in Redis for future lookups.
+   
 4. The engineer can query:
    - All spans for a specific trace ID
    - The full call hierarchy of a trace as a parent-child tree
    - All failed spans to identify what is currently broken
    - The slowest operations across all services to find performance bottlenecks
+     
 5. For any trace, the engineer can call the analyze endpoint. The collector fetches 
    the spans and sends them to an LLM, which returns a structured diagnostic report 
    identifying the likely root cause, how the failure propagated across services, 
@@ -82,10 +84,10 @@ report identifying the likely root cause, reducing the need to manually read thr
 | Method | Endpoint | Description | Response |
 |---|---|---|---|
 | POST | `/api/spans` | Receive a span from a microservice and store it | `202 Accepted` |
-| GET | `/api/traces/{traceId}` | Fetch all spans for a trace. Checks Redis first, falls back to PostgreSQL on cache miss | `200 OK` — list of spans |
-| GET | `/api/traces/failed` | Fetch all spans with status ERROR | `200 OK` — list of spans |
-| GET | `/api/traces/slowest` | Fetch all spans ordered by duration, slowest first | `200 OK` — list of spans |
-| GET | `/api/traces/{traceId}/analyze` | Send trace spans to LLM and return plain-English root cause analysis | `200 OK` — analysis text |
+| GET | `/api/traces/{traceId}` | Fetch all spans for a trace. Checks Redis first, falls back to PostgreSQL on cache miss | `200 OK` — list of spans,  `404` if trace not found |
+| GET | `/api/traces/failed` | Fetch all spans with status ERROR | `200 OK` — list of spans,  `404` if trace not found |
+| GET | `/api/traces/slowest` | Fetch all spans ordered by duration, slowest first | `200 OK` — list of spans,  `404` if trace not found |
+| GET | `/api/traces/{traceId}/analyze` | Send trace spans to LLM and return plain-English root cause analysis | `200 OK` — analysis text|
 | GET | `/api/traces/{traceId}/tree` | Reconstruct the full call hierarchy of a trace as a parent-child tree | `200 OK` — tree of spans, `404` if trace not found |
 
 
