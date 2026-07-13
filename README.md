@@ -120,3 +120,42 @@ Cache-aside specifically fits because spans are write-once — once a span is pe
 Engineers query by trace ID, not by individual span ID. Caching the full list of spans per 
 trace ID matches the actual access pattern — one key, one result set, served instantly.
 
+---
+
+## Performance
+
+Trace-lookup latency was benchmarked using Apache JMeter, comparing cold-cache 
+(Redis cleared) reads against warm-cache reads under concurrent load.
+
+**Test setup:** `GET /api/traces/trace-A001`
+
+### Cold Cache (Redis cleared before each request)
+
+| Request | Response Time (ms) | Error Rate |
+|---|---:|---:|
+| 1 | 236 | 0.00% |
+| 2 | 44 | 0.00% |
+| 3 | 29 | 0.00% |
+| 4 | 29 | 0.00% |
+| 5 | 75 | 0.00% |
+| 6 | 18 | 0.00% |
+| 7 | 19 | 0.00% |
+| 8 | 16 | 0.00% |
+| 9 | 19 | 0.00% |
+| 10 | 14 | 0.00% |
+
+- Average (all 10 requests): 49.9 ms
+- Average (excluding request 1): **29.2 ms**
+- Error rate: 0.00%
+
+*Request 1 recorded the highest latency (236ms), consistent with one-time JVM 
+warm-up / class-loading cost on first execution rather than actual cache-miss 
+latency. Excluding it, cold-cache reads averaged 29.2ms.*
+
+### Warm Cache (500 concurrent requests, cache not cleared)
+
+(./JmeterTesting500.jpg).
+
+**Result:** Redis cache-aside caching reduced average trace-lookup latency by 
+~83% (29ms → 5ms) between cold and warm reads, while sustaining 500 concurrent 
+requests with a 0% error rate.
