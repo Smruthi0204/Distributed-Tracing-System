@@ -154,7 +154,7 @@ latency. Excluding it, cold-cache reads averaged 29.2ms.*
 
 ### Warm Cache (500 concurrent requests, cache not cleared)
 
-(./JmeterTesting500.jpg).
+![JMeter warm-cache load test results](./JmeterTesting500.png)
 
 **Result:** Redis cache-aside caching reduced average trace-lookup latency by 
 ~83% (29ms → 5ms) between cold and warm reads, while sustaining 500 concurrent 
